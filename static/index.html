@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Tank Control System</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { 
+            font-family: 'Arial', sans-serif; 
+            padding: 20px; 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background-color: #f8f9fa;
+        }
+        .param-group { 
+            margin-bottom: 20px; 
+            border: 1px solid #dee2e6; 
+            padding: 20px; 
+            border-radius: 8px; 
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 600; 
+            color: #2d3436;
+        }
+        input { 
+            width: 100%; 
+            padding: 10px; 
+            margin-bottom: 12px; 
+            box-sizing: border-box; 
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button { 
+            background: #4a90e2; 
+            color: white; 
+            padding: 14px 28px; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 16px;
+            transition: background 0.3s ease;
+        }
+        button:hover { background: #357abd; }
+        #result { 
+            margin-top: 25px; 
+            padding: 20px; 
+            background: white; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .chart-container { 
+            margin: 25px 0; 
+            padding: 20px; 
+            border: 1px solid #dee2e6; 
+            border-radius: 8px; 
+            background: white;
+        }
+        canvas { 
+            max-height: 450px; 
+            margin-top: 15px;
+        }
+        .chart-container h3 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f1f1f1;
+            font-size: 1.4em;
+        }
+        .chart-container p {
+            color: #6c757d;
+            font-size: 0.95em;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        .chart-container ul {
+            margin: 12px 0;
+            padding-left: 25px;
+            color: #6c757d;
+        }
+        .chart-container li {
+            margin-bottom: 6px;
+            font-size: 0.9em;
+        }
+        #result pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Управление температурой резервуара</h1>
+    
+    <div class="param-group">
+        <h2>Основные параметры</h2>
+        <label>Объем резервуара (м³):</label>
+        <input type="number" id="tankVolume" value="0.1" step="0.01" min="0.01">
+        
+        <label>Начальная температура (°C):</label>
+        <input type="number" id="initialTemperature" value="20" min="0">
+        
+        <label>Целевая температура (°C):</label>
+        <input type="number" id="setpointTemperature" value="80" min="0" max="100">
+    </div>
+
+    <div class="param-group">
+        <h2>Параметры жидкости</h2>
+        <label>Плотность (кг/м³):</label>
+        <input type="number" id="density" value="1000" min="0">
+        
+        <label>Теплоемкость (Дж/кг·°C):</label>
+        <input type="number" id="heatCapacity" value="4180" min="0">
+        
+        <label>Коэффициент теплопотерь (Вт/°C):</label>
+        <input type="number" id="heatLossCoeff" value="10" min="0">
+    </div>
+
+    <div class="param-group">
+        <h2>ПИД-регулятор</h2>
+        <label>Коэффициент P:</label>
+        <input type="number" id="Kp" value="1500" min="0">
+        
+        <label>Коэффициент I:</label>
+        <input type="number" id="Ki" value="8" min="0">
+        
+        <label>Коэффициент D:</label>
+        <input type="number" id="Kd" value="200" min="0">
+    </div>
+
+    <div class="param-group">
+        <h2>Параметры симуляции</h2>
+        <label>Макс. мощность нагревателя (Вт):</label>
+        <input type="number" id="heaterPowerMax" value="20000" min="0">
+        
+        <label>Время симуляции (сек):</label>
+        <input type="number" id="stop_time" value="3600" min="10">
+    </div>
+
+    <button onclick="runSimulation()">Запустить симуляцию</button>
+    
+    <div class="chart-container">
+        <h3>Динамика температуры жидкости</h3>
+        <p>Отображает изменение температуры в резервуаре в течение времени симуляции. 
+           Красная линия показывает текущую температуру, серая пунктирная линия - целевую температуру (уставку).</p>
+        <canvas id="temperatureChart"></canvas>
+    </div>
+    
+    <div class="chart-container">
+        <h3>Мощность нагревательного элемента</h3>
+        <p>Показывает изменение мощности нагревателя в процессе работы системы. 
+           Максимальное значение ограничено установленным параметром. 
+           Синяя область показывает фактическое потребление мощности.</p>
+        <canvas id="powerChart"></canvas>
+    </div>
+    
+    <div class="chart-container">
+        <h3>Компоненты ПИД-регулятора</h3>
+        <p>График работы составляющих ПИД-контроллера:
+            <ul>
+                <li><strong style="color: #ff9f40">Ошибка</strong> - текущая разница между заданной и фактической температурой</li>
+                <li><strong style="color: #4bc0c0">Интегральная составляющая</strong> - накопленная сумма ошибок за время работы</li>
+                <li><strong style="color: #9966ff">Дифференциальная составляющая</strong> - скорость изменения ошибки</li>
+            </ul>
+        </p>
+        <canvas id="pidChart"></canvas>
+    </div>
+
+    <div id="result"></div>
+
+    <script>
+        let charts = {
+            temperature: null,
+            power: null,
+            pid: null
+        };
+
+        function destroyCharts() {
+            Object.values(charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+        }
+
+        async function runSimulation() {
+            destroyCharts();
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div style="color: #6c757d; padding: 15px; background: #f8f9fa; border-radius: 6px;">Идет расчет... Пожалуйста, подождите ⏳</div>';
+
+            const config = {
+                tankVolume: parseFloat(document.getElementById('tankVolume').value),
+                initialTemperature: parseFloat(document.getElementById('initialTemperature').value),
+                setpointTemperature: parseFloat(document.getElementById('setpointTemperature').value),
+                density: parseFloat(document.getElementById('density').value),
+                heatCapacity: parseFloat(document.getElementById('heatCapacity').value),
+                heatLossCoeff: parseFloat(document.getElementById('heatLossCoeff').value),
+                Kp: parseFloat(document.getElementById('Kp').value),
+                Ki: parseFloat(document.getElementById('Ki').value),
+                Kd: parseFloat(document.getElementById('Kd').value),
+                heaterPowerMax: parseFloat(document.getElementById('heaterPowerMax').value),
+                stop_time: parseFloat(document.getElementById('stop_time').value)
+            };
+
+            try {
+                const response = await fetch('/simulate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                
+                const data = await response.json();
+                
+                if(data.error) {
+                    resultDiv.innerHTML = `<div style="color: #dc3545; padding: 15px; background: #f8d7da; border-radius: 6px;">Ошибка: ${data.error}</div>`;
+                    return;
+                }
+
+                const times = data.time_series.map(d => d.time);
+                const setpoint = Array(times.length).fill(config.setpointTemperature);
+
+                // График температуры
+                charts.temperature = new Chart(document.getElementById('temperatureChart'), {
+                    type: 'line',
+                    data: {
+                        labels: times,
+                        datasets: [{
+                            label: 'Текущая температура',
+                            data: data.time_series.map(d => d.temperature),
+                            borderColor: '#ff6384',
+                            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                            tension: 0.2,
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Целевая температура',
+                            data: setpoint,
+                            borderColor: '#6c757d',
+                            borderDash: [5, 5],
+                            borderWidth: 1,
+                            pointRadius: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { 
+                                title: { 
+                                    display: true, 
+                                    text: 'Время, сек',
+                                    color: '#6c757d'
+                                }
+                            },
+                            y: { 
+                                title: { 
+                                    display: true, 
+                                    text: 'Температура, °C',
+                                    color: '#6c757d'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: { color: '#2c3e50' }
+                            }
+                        }
+                    }
+                });
+
+                // График мощности
+                charts.power = new Chart(document.getElementById('powerChart'), {
+                    type: 'line',
+                    data: {
+                        labels: times,
+                        datasets: [{
+                            label: 'Мощность нагревателя',
+                            data: data.time_series.map(d => d.heaterPower),
+                            borderColor: '#36a2eb',
+                            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                            tension: 0.2,
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { 
+                                title: { 
+                                    display: true, 
+                                    text: 'Время, сек',
+                                    color: '#6c757d'
+                                }
+                            },
+                            y: { 
+                                title: { 
+                                    display: true, 
+                                    text: 'Мощность, Вт',
+                                    color: '#6c757d'
+                                },
+                                suggestedMax: config.heaterPowerMax * 1.1
+                            }
+                        },
+                        plugins: {
+                            annotation: {
+                                annotations: {
+                                    maxPowerLine: {
+                                        type: 'line',
+                                        yMin: config.heaterPowerMax,
+                                        yMax: config.heaterPowerMax,
+                                        borderColor: '#dc3545',
+                                        borderWidth: 1,
+                                        borderDash: [5, 5],
+                                        label: {
+                                            content: 'Максимальная мощность',
+                                            position: 'end',
+                                            backgroundColor: 'rgba(220, 53, 69, 0.1)'
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // График ПИД-составляющих
+                charts.pid = new Chart(document.getElementById('pidChart'), {
+                    type: 'line',
+                    data: {
+                        labels: times,
+                        datasets: [
+                            {
+                                label: 'Ошибка',
+                                data: data.time_series.map(d => d.error),
+                                borderColor: '#ff9f40',
+                                backgroundColor: 'rgba(255, 159, 64, 0.1)',
+                                tension: 0.2,
+                                borderWidth: 2
+                            },
+                            {
+                                label: 'Интегральная',
+                                data: data.time_series.map(d => d.integralError),
+                                borderColor: '#4bc0c0',
+                                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                                tension: 0.2,
+                                borderWidth: 2
+                            },
+                            {
+                                label: 'Дифференциальная',
+                                data: data.time_series.map(d => d.derivativeError),
+                                borderColor: '#9966ff',
+                                backgroundColor: 'rgba(153, 102, 255, 0.1)',
+                                tension: 0.2,
+                                borderWidth: 2
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { 
+                                title: { 
+                                    display: true, 
+                                    text: 'Время, сек',
+                                    color: '#6c757d'
+                                }
+                            },
+                            y: { 
+                                title: { 
+                                    display: true, 
+                                    text: 'Значение',
+                                    color: '#6c757d'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: { color: '#2c3e50' }
+                            }
+                        }
+                    }
+                });
+
+                const finalTemp = data.time_series[data.time_series.length-1].temperature.toFixed(2);
+                const maxPower = Math.max(...data.time_series.map(d => d.heaterPower)).toFixed(2);
+                
+                resultDiv.innerHTML = `
+                    <h3 style="color: #2c3e50; margin-top: 0;">Результаты симуляции</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 6px;">
+                            <div style="color: #6c757d; font-size: 0.9em;">Время симуляции</div>
+                            <div style="font-size: 1.4em; color: #2c3e50;">${data.sim_time} сек</div>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 6px;">
+                            <div style="color: #6c757d; font-size: 0.9em;">Финальная температура</div>
+                            <div style="font-size: 1.4em; color: ${finalTemp >= config.setpointTemperature*0.95 ? '#28a745' : '#dc3545'};">${finalTemp} °C</div>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 6px;">
+                            <div style="color: #6c757d; font-size: 0.9em;">Макс. мощность</div>
+                            <div style="font-size: 1.4em; color: ${maxPower >= config.heaterPowerMax*0.95 ? '#dc3545' : '#4a90e2'};">${maxPower} Вт</div>
+                        </div>
+                    </div>
+                    <h4 style="color: #2c3e50; margin-bottom: 12px;">Использованные параметры:</h4>
+                    <pre>${JSON.stringify(data.config, null, 2)}</pre>
+                `;
+
+            } catch(e) {
+                resultDiv.innerHTML = `<div style="color: #dc3545; padding: 15px; background: #f8d7da; border-radius: 6px;">Ошибка соединения: ${e.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
