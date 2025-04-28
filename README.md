@@ -12,7 +12,7 @@ bash<br>
 
 Библиотеки, которые также нужно установить: ```pip install flask requests OMPython```<br>
 ZMQ сервер: ```omc --interactive=zmq```<br>
-в переменной model_path (service.py) задайте путь до модели TankLevelControl (пример ```model_path = r"C:\ktk\models\TankControlSystem.mo"```)<br>
+в переменной model_path (service.py) задайте путь до модели TankControlSystem (пример ```model_path = r"C:\ktk\models\TankControlSystem.mo"```)<br>
 Перейдите к директиории проекта ```cd /ваш_путь/modelica_service``` (пример: ```cd C:/ktk/modelica_service```) -> запустите ```python service.py```
 Ожидаемый вывод service.py:<br>
 Serving Flask app 'service'<br>
