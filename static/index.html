@@ -1,419 +1,811 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Tank Control System</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система Управления Технологическим Процессом</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
     <style>
-        body { 
-            font-family: 'Arial', sans-serif; 
-            padding: 20px; 
-            max-width: 1200px; 
-            margin: 0 auto; 
-            background-color: #f8f9fa;
+        :root {
+            --bg-color: #f0f2f5;
+            --sidebar-bg: #ffffff;
+            --panel-bg: #ffffff;
+            --header-bg: #ffffff;
+            --text-color: #333;
+            --text-light: #666;
+            --border-color: #e0e0e0;
+            --primary-color: #007bff;
+            --primary-hover: #0056b3;
+            --secondary-color: #6c757d;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --success-color: #28a745;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --shadow: 0 1px 3px rgba(0,0,0,0.05);
+            --border-radius: 8px;
         }
-        .param-group { 
-            margin-bottom: 20px; 
-            border: 1px solid #dee2e6; 
-            padding: 20px; 
-            border-radius: 8px; 
-            background-color: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+
+        body {
+            font-family: var(--font-family);
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.2s;
         }
-        label { 
-            display: block; 
-            margin-bottom: 8px; 
-            font-weight: 600; 
-            color: #2d3436;
+
+        .main-container {
+            display: flex;
+            flex-grow: 1;
+            overflow: hidden;
         }
-        input { 
-            width: 100%; 
-            padding: 10px; 
-            margin-bottom: 12px; 
-            box-sizing: border-box; 
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            font-size: 14px;
+
+        .controls-sidebar {
+            width: 380px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
         }
-        button { 
-            background: #4a90e2; 
-            color: white; 
-            padding: 14px 28px; 
-            border: none; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            font-size: 16px;
-            transition: background 0.3s ease;
+
+        .panel {
+            background: var(--panel-bg);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            border: 1px solid var(--border-color);
         }
-        button:hover { background: #357abd; }
-        #result { 
-            margin-top: 25px; 
-            padding: 20px; 
-            background: white; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .chart-container { 
-            margin: 25px 0; 
-            padding: 20px; 
-            border: 1px solid #dee2e6; 
-            border-radius: 8px; 
-            background: white;
-        }
-        canvas { 
-            max-height: 450px; 
-            margin-top: 15px;
-        }
-        .chart-container h3 {
-            color: #2c3e50;
-            margin: 0 0 15px 0;
-            padding-bottom: 12px;
-            border-bottom: 2px solid #f1f1f1;
-            font-size: 1.4em;
-        }
-        .chart-container p {
-            color: #6c757d;
-            font-size: 0.95em;
+
+        .panel h2, .panel h3 {
+            margin-top: 0;
+            font-size: 1.1em;
+            color: var(--text-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
             margin-bottom: 15px;
-            line-height: 1.6;
         }
-        .chart-container ul {
-            margin: 12px 0;
-            padding-left: 25px;
-            color: #6c757d;
+        .panel h3 {
+            font-size: 1em;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
         }
-        .chart-container li {
-            margin-bottom: 6px;
+
+        .content-main {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .top-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group { margin-bottom: 15px; }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
             font-size: 0.9em;
         }
-        #result pre {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 6px;
-            overflow-x: auto;
+        input[type="number"], select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        button {
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.2s;
+        }
+        button svg { width: 16px; height: 16px; }
+
+        .speed-buttons button {
+            background-color: #e9ecef;
+            border: 1px solid transparent;
+            color: #495057;
+        }
+        .speed-buttons button:hover {
+            border-color: #adb5bd;
+        }
+        .speed-buttons button.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-hover);
+        }
+
+        #start-simulation { background-color: var(--success-color); color: white; }
+        #start-simulation:hover { background-color: #218838; }
+        #pause-simulation { background-color: var(--warning-color); color: #333; }
+        #pause-simulation:hover { background-color: #e0a800; }
+        #resume-simulation { background-color: var(--primary-color); color: white; }
+        #resume-simulation:hover { background-color: var(--primary-hover); }
+        #stop-simulation { background-color: var(--danger-color); color: white; }
+        #stop-simulation:hover { background-color: #c82333; }
+        
+        button:disabled {
+            background-color: #e9ecef;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .main-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .secondary-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        .tab {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 15px;
+        }
+        input[type=range] {
+            width: 100%;
+            margin: 5px 0;
+            background-color: transparent;
+            -webkit-appearance: none;
+        }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track {
+            background: #e0e0e0;
+            border-radius: 5px;
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            margin-top: -4px;
+            width: 16px;
+            height: 16px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            cursor: pointer;
+            -webkit-appearance: none;
+        }
+        .tab button {
+            background-color: transparent;
+            color: var(--text-light);
+            padding: 10px 15px;
+            border: none;
+            border-bottom: 2px solid transparent;
+            border-radius: 0;
+            font-weight: 500;
+            margin-bottom: -1px; 
+        }
+        .tab button.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        .tabcontent { display: none; }
+        .tabcontent.active { display: block; animation: fadeEffect 0.5s; }
+        @keyframes fadeEffect { from {opacity: 0;} to {opacity: 1;} }
+        
+        .visualization-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px 0;
+            min-height: 220px;
+        }
+        #tank-visualization, #separator-visualization {
+            width: 150px;
+            height: 200px;
+            border: 3px solid #333;
+            position: relative;
+            background-color: #f0f0f0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+        }
+        #tank-level-visual { background-color: #3498db; }
+        #separator-water-level { background-color: #3498db; z-index: 1; }
+        #separator-oil-level { background-color: #a0522d; z-index: 2; }
+        #tank-level-visual, #separator-water-level, #separator-oil-level {
+            width: 100%;
+            position: absolute;
+            bottom: 0;
+            transition: height 0.3s ease, bottom 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1em;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+        }
+
+        .current-values div { margin-bottom: 8px; font-size: 0.9em; }
+        .current-values .bold { font-weight: 500; color: var(--text-color); }
+        .status-footer {
+            padding: 10px 20px;
+            background-color: var(--sidebar-bg);
+            border-top: 1px solid var(--border-color);
+            color: var(--text-light);
+            font-size: 0.9em;
+            height: 20px;
+        }
+        .status { padding: 0; }
+        .status.success { color: var(--success-color); }
+        .status.error { color: var(--danger-color); }
+        .status.info { color: var(--primary-color); }
+
+        .chart-container { position: relative; width: 100%; }
+        .chart-title { font-size: 1.1em; font-weight: 500; margin-bottom: 15px; }
+        .axis path, .axis line { stroke: #ccc; }
+        .axis text { fill: var(--text-light); }
+        .grid line { stroke: var(--border-color); stroke-opacity: 0.7; shape-rendering: crispEdges; }
+        .line { fill: none; stroke-width: 2px; }
+
+        .model-specific { display: none; }
+
+        .form-group.locked {
+            opacity: 0.65;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
-    <h1>Управление температурой резервуара</h1>
-    
-    <div class="param-group">
-        <h2>Основные параметры</h2>
-        <label>Объем резервуара (м³):</label>
-        <input type="number" id="tankVolume" value="0.1" step="0.01" min="0.01">
+
+    <div class="main-container">
         
-        <label>Начальная температура (°C):</label>
-        <input type="number" id="initialTemperature" value="20" min="0">
+        <aside class="controls-sidebar">
+            <div class="panel">
+                <h2>Модель</h2>
+                <div class="form-group">
+                    <label for="model-selector">Выберите модель:</label>
+                    <select id="model-selector">
+                        <option value="TankControlSystem">Управление температурой в баке</option>
+                        <option value="OilSeparator_ThreePhase">Нефтегазовый сепаратор</option>
+                    </select>
+                </div>
+                </div>
+                
+            <div class="panel">
+                <h2>Управление процессом</h2>
+                <div class="main-actions">
+                    <button id="start-simulation"><svg fill="currentColor" viewBox="0 0 16 16"><path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/></svg>Старт</button>
+                    <button id="stop-simulation" class="danger" disabled><svg fill="currentColor" viewBox="0 0 16 16"><path d="M5 3.5h6A1.5 1.5 0 0 1 12.5 5v6a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 11V5A1.5 1.5 0 0 1 5 3.5z"/></svg>Стоп</button>
+                </div>
+                <div class="secondary-actions">
+                    <button id="pause-simulation" class="warning" disabled><svg fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z"/></svg>Пауза</button>
+                    <button id="resume-simulation" disabled><svg fill="currentColor" viewBox="0 0 16 16"><path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/></svg>Продолжить</button>
+                </div>
+                <hr style="border: none; border-top: 1px solid var(--border-color); margin: 20px 0;">
+                <label>Скорость симуляции:</label>
+                <div class="speed-control">
+                    <div class="speed-buttons" style="display: flex; gap: 5px;">
+                        <button id="speed-0.5">0.5x</button>
+                        <button id="speed-1" class="active">1x</button>
+                        <button id="speed-2">2x</button>
+                        <button id="speed-5">5x</button>
+                        <button id="speed-10">10x</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h2>Параметры симуляции</h2>
+                <div class="form-group">
+                    <label for="stop_time">Время симуляции (с):</label>
+                    <div class="stop-time-container" style="display: flex; align-items: center; gap: 10px;">
+                        <input type="number" id="stop_time" min="10" step="10" value="3600">
+                        <button id="increase-time-btn" title="Добавить 100с" style="padding: 8px 12px;">+100с</button>
+                </div>
+                    <input type="range" class="parameter-slider" id="stop_time-slider" min="10" max="7200" step="10" value="3600">
+                </div>
+                <div class="form-group">
+                    <label for="time-slider">Перемотка:</label>
+                    <input type="range" id="time-slider" class="parameter-slider" min="0" max="3600" step="1" value="0">
+                    <div id="time-display" style="text-align: center; margin-top: 5px; font-size: 0.9em; color: var(--text-light);">0 / 3600 с</div>
+                </div>
+                </div>
+
+            
+            <div class="panel">
+                <h2>Параметры модели</h2>
+                <div id="dynamic-params"></div>
+                 
+                 <div style="display:none;">
+                     <input type="number" id="initialTemperature" value="20">
+                     <input type="number" id="heatCapacity" value="4180">
+                     <input type="number" id="density" value="1000">
+                     <input type="number" id="levelHighAlarm" value="0.95">
+                     <input type="number" id="levelHighWarning" value="0.85">
+                     <input type="number" id="levelLowWarning" value="0.15">
+                     <input type="number" id="levelLowAlarm" value="0.05">
+                     <input type="number" id="heatLossCoeff" value="10">
+                     <input type="number" id="oilDensity" value="850">
+                     <input type="number" id="waterDensity" value="1000">
+                </div>
+                </div>
+             <button id="export-csv" style="width: 100%; background-color: var(--secondary-color); color: white;">Экспорт CSV</button>
+        </aside>
+
         
-        <label>Целевая температура (°C):</label>
-        <input type="number" id="setpointTemperature" value="80" min="0" max="100">
+        <main class="content-main">
+            <div class="top-row">
+                <div class="panel">
+                    <h3 id="viz-title">Визуализация</h3>
+                     <div id="viz-TankControlSystem" class="model-specific visualization-container">
+                        <div id="tank-visualization"><div id="tank-level-visual">50.0%</div></div>
+                </div>
+                     <div id="viz-OilSeparator_ThreePhase" class="model-specific visualization-container">
+                        <div id="separator-visualization">
+                            <div id="separator-water-level">Вода</div>
+                            <div id="separator-oil-level">Нефть</div>
+                </div>
+                </div>
+                </div>
+                <div class="panel">
+                    <h3 id="values-title">Текущие значения</h3>
+                    <div id="values-TankControlSystem" class="model-specific current-values">
+                        <div><span class="bold">Температура:</span> <span id="current-temperature">-</span> °C</div>
+                        <div><span class="bold">Мощность:</span> <span id="current-power">-</span> Вт</div>
+                        <div><span class="bold">Уровень:</span> <span id="current-level">-</span>%</div>
+                        <div><span class="bold">Ошибка:</span> <span id="current-error">-</span> °C</div>
+            </div>
+                     <div id="values-OilSeparator_ThreePhase" class="model-specific current-values">
+                        <div><span class="bold">Уровень нефти:</span> <span id="current-h_oil">-</span></div>
+                        <div><span class="bold">Уровень воды:</span> <span id="current-h_water">-</span></div>
+                        <div><span class="bold">Общий уровень:</span> <span id="current-h_total">-</span></div>
+                        <div><span class="bold">Выход нефти:</span> <span id="current-m_flow_oil">-</span> кг/с</div>
+                        <div><span class="bold">Выход воды:</span> <span id="current-m_flow_water">-</span> кг/с</div>
+                        <div><span class="bold">Выход газа:</span> <span id="current-m_flow_gas">-</span> кг/с</div>
+            </div>
+            </div>
+        </div>
+
+            <div class="panel">
+                <h2>Графики процесса</h2>
+                <div id="charts-container"></div>
+            </div>
+        </main>
     </div>
 
-    <div class="param-group">
-        <h2>Параметры жидкости</h2>
-        <label>Плотность (кг/м³):</label>
-        <input type="number" id="density" value="1000" min="0">
-        
-        <label>Теплоемкость (Дж/кг·°C):</label>
-        <input type="number" id="heatCapacity" value="4180" min="0">
-        
-        <label>Коэффициент теплопотерь (Вт/°C):</label>
-        <input type="number" id="heatLossCoeff" value="10" min="0">
-    </div>
-
-    <div class="param-group">
-        <h2>ПИД-регулятор</h2>
-        <label>Коэффициент P:</label>
-        <input type="number" id="Kp" value="1500" min="0">
-        
-        <label>Коэффициент I:</label>
-        <input type="number" id="Ki" value="8" min="0">
-        
-        <label>Коэффициент D:</label>
-        <input type="number" id="Kd" value="200" min="0">
-    </div>
-
-    <div class="param-group">
-        <h2>Параметры симуляции</h2>
-        <label>Макс. мощность нагревателя (Вт):</label>
-        <input type="number" id="heaterPowerMax" value="20000" min="0">
-        
-        <label>Время симуляции (сек):</label>
-        <input type="number" id="stop_time" value="3600" min="10">
-    </div>
-
-    <button onclick="runSimulation()">Запустить симуляцию</button>
-    
-    <div class="chart-container">
-        <h3>Динамика температуры жидкости</h3>
-        <p>Отображает изменение температуры в резервуаре в течение времени симуляции. 
-           Красная линия показывает текущую температуру, серая пунктирная линия - целевую температуру (уставку).</p>
-        <canvas id="temperatureChart"></canvas>
-    </div>
-    
-    <div class="chart-container">
-        <h3>Мощность нагревательного элемента</h3>
-        <p>Показывает изменение мощности нагревателя в процессе работы системы. 
-           Максимальное значение ограничено установленным параметром. 
-           Синяя область показывает фактическое потребление мощности.</p>
-        <canvas id="powerChart"></canvas>
-    </div>
-    
-    <div class="chart-container">
-        <h3>Компоненты ПИД-регулятора</h3>
-        <p>График работы составляющих ПИД-контроллера:
-            <ul>
-                <li><strong style="color: #ff9f40">Ошибка</strong> - текущая разница между заданной и фактической температурой</li>
-                <li><strong style="color: #4bc0c0">Интегральная составляющая</strong> - накопленная сумма ошибок за время работы</li>
-                <li><strong style="color: #9966ff">Дифференциальная составляющая</strong> - скорость изменения ошибки</li>
-            </ul>
-        </p>
-        <canvas id="pidChart"></canvas>
-    </div>
-
-    <div id="result"></div>
+    <footer class="status-footer">
+        <div id="status-message" class="status">Ожидание запуска симуляции...</div>
+    </footer>
 
     <script>
-        let charts = {
-            temperature: null,
-            power: null,
-            pid: null
+        
+        const socket = io();
+        let simulationRunning = false, simulationPaused = false;
+        let currentModel = 'TankControlSystem';
+        let currentTime = 0, stopTime = 3600, timeSpeed = 1.0;
+        let dataStore = {}; 
+        let activeCharts = {}; 
+
+        
+        
+        const chartConfigs = {
+            TankControlSystem: [
+                { id: 'temperature-chart', title: 'Контроль температуры', yLabel: 'Температура (°C)',
+                    series: [{ id: 'temperature', name: 'Температура', color: '#FF4136' }, { id: 'setpointTemperature', name: 'Уставка', color: '#2ECC40', dash: '5,5' }]
+                },
+                { id: 'level-chart', title: 'Уровень в баке', yLabel: 'Уровень (доля)', yRange: [0, 1],
+                series: [
+                        { id: 'level', name: 'Уровень', color: '#0074D9' },
+                        { id: 'levelHighAlarm', name: 'Верхний авар.', color: '#dc3545', dash: '4,4' },
+                        { id: 'levelLowAlarm', name: 'Нижний авар.', color: '#dc3545', dash: '4,4' },
+                        { id: 'levelHighWarning', name: 'Верхн. предупр.', color: '#ffc107', dash: '4,4' },
+                        { id: 'levelLowWarning', name: 'Нижн. предупр.', color: '#ffc107', dash: '4,4' }
+                    ]
+                },
+                { id: 'power-chart', title: 'Мощность нагревателя', yLabel: 'Мощность (Вт)',
+                    series: [{ id: 'heaterPower', name: 'Мощность', color: '#B10DC9' }]
+                }
+            ],
+            OilSeparator_ThreePhase: [
+                { id: 'levels-chart', title: 'Уровни в сепараторе', yLabel: 'Уровень (доля)', yRange: [0, 1],
+                series: [
+                        { id: 'h_oil', name: 'Уровень нефти', color: '#8B4513' },
+                        { id: 'h_water', name: 'Уровень воды', color: '#0074D9' },
+                        { id: 'oilLevelSetpoint', name: 'Уставка (нефть)', color: '#2ECC40', dash: '5,5' },
+                        { id: 'waterLevelSetpoint', name: 'Уставка (вода)', color: '#2ECC40', dash: '5,5' }
+                    ]
+                },
+                { id: 'flows-chart', title: 'Выходные потоки', yLabel: 'Расход (кг/с)',
+                    series: [ { id: 'm_flow_oil', name: 'Поток нефти', color: '#8B4513' }, { id: 'm_flow_water', name: 'Поток воды', color: '#0074D9' }, { id: 'm_flow_gas', name: 'Поток газа', color: '#AAAAAA' }]
+                }
+            ]
         };
 
-        function destroyCharts() {
-            Object.values(charts).forEach(chart => {
-                if (chart) chart.destroy();
+        function initializeCharts() {
+            
+            const chartContainer = d3.select("#charts-container");
+            chartContainer.html('');
+            activeCharts = {};
+            const configs = chartConfigs[currentModel];
+            if (!configs) return;
+
+            configs.forEach(config => {
+                const chartDiv = chartContainer.append('div').attr('class', 'chart-container');
+                chartDiv.append('div').attr('class', 'chart-title').text(config.title);
+                const chartElement = chartDiv.append('div').attr('id', config.id).attr('class', 'chart');
+                
+                const margin = { top: 10, right: 20, bottom: 30, left: 50 };
+                const width = chartElement.node().getBoundingClientRect().width - margin.left - margin.right;
+                const height = 300 - margin.top - margin.bottom;
+                
+                const svg = chartElement.append('svg').attr('width', width + margin.left + margin.right).attr('height', height + margin.top + margin.bottom).append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+                
+                const chartState = { config, svg, width, height, margin, xScale: d3.scaleLinear().range([0, width]), yScale: d3.scaleLinear().range([height, 0]), lineGenerators: {}, paths: {} };
+                chartState.xAxis = svg.append('g').attr('class', 'axis axis--x').attr('transform', `translate(0,${height})`);
+                chartState.yAxis = svg.append('g').attr('class', 'axis axis--y');
+                svg.append('text').attr('transform', 'rotate(-90)').attr('y', 0 - margin.left + 5).attr('x', 0 - (height / 2)).attr('dy', '1em').style('text-anchor', 'middle').style('font-size', '12px').text(config.yLabel);
+                chartState.gridY = svg.append('g').attr('class', 'grid grid--y');
+                
+                config.series.forEach(series => {
+                    chartState.lineGenerators[series.id] = d3.line().x(d => chartState.xScale(d.time)).y(d => chartState.yScale(d.value)).curve(d3.curveBasis);
+                    chartState.paths[series.id] = svg.append('path').attr('class', `line line-${series.id}`).attr('stroke', series.color).attr('stroke-dasharray', series.dash || '').attr('fill', 'none').attr('stroke-width', 2);
+                });
+                activeCharts[config.id] = chartState;
+            });
+        }
+        
+        function updateCharts(newData) {
+            
+            Object.keys(newData).forEach(key => {
+                if (!dataStore[key]) dataStore[key] = [];
+                dataStore[key].push(newData[key]);
+            });
+            
+            const maxPoints = 2000;
+            if (dataStore.time && dataStore.time.length > maxPoints) {
+                Object.keys(dataStore).forEach(key => { dataStore[key] = dataStore[key].slice(-maxPoints); });
+            }
+            
+            Object.values(activeCharts).forEach(chart => {
+                const { config, xScale, yScale, xAxis, yAxis, gridY, paths, lineGenerators } = chart;
+                xScale.domain(d3.extent(dataStore.time));
+                let yMin = Infinity, yMax = -Infinity;
+                if (config.yRange) { [yMin, yMax] = config.yRange; } 
+                else {
+                    config.series.forEach(series => {
+                        if (dataStore[series.id]) {
+                            const [min, max] = d3.extent(dataStore[series.id]);
+                            if (min < yMin) yMin = min; if (max > yMax) yMax = max;
+                        }
+                    });
+                    const padding = (yMax - yMin) * 0.1 || 1;
+                    yMin -= padding; yMax += padding;
+                }
+                yScale.domain([yMin, yMax]).nice();
+                xAxis.call(d3.axisBottom(xScale));
+                yAxis.call(d3.axisLeft(yScale));
+                gridY.call(d3.axisLeft(yScale).tickSize(-chart.width).tickFormat(''));
+                
+                config.series.forEach(series => {
+                    if (dataStore[series.id]) {
+                        const seriesData = dataStore.time.map((t, i) => ({ time: t, value: dataStore[series.id][i] }));
+                        paths[series.id].datum(seriesData).attr('d', lineGenerators[series.id]);
+                    }
+                });
+            });
+            
+            document.getElementById('time-slider').value = newData.time;
+            document.getElementById('time-display').textContent = `${newData.time.toFixed(1)} / ${stopTime} с`;
+            currentTime = newData.time;
+            updateCurrentValues(newData);
+        }
+
+        function updateCurrentValues(data) {
+            
+            if (currentModel === 'TankControlSystem') {
+                const levelPercent = (data.level ?? 0) * 100;
+                document.getElementById('current-temperature').textContent = data.temperature?.toFixed(2) ?? '-';
+                document.getElementById('current-power').textContent = data.heaterPower?.toFixed(0) ?? '-';
+                document.getElementById('current-level').textContent = levelPercent.toFixed(1) ?? '-';
+                document.getElementById('current-error').textContent = data.error?.toFixed(2) ?? '-';
+                updateTankVisualization(data.level);
+                if (data.highAlarm || data.lowAlarm) {
+                    showStatus('Аварийный уровень! Симуляция будет остановлена.', 'error');
+                } else if (data.highWarning || data.lowWarning) {
+                    showStatus('Предупреждение: уровень приближается к пределу.', 'warning');
+                }
+            } else if (currentModel === 'OilSeparator_ThreePhase') {
+                const oilLevel = data.h_oil ?? 0;
+                const waterLevel = data.h_water ?? 0;
+                document.getElementById('current-h_oil').textContent = oilLevel.toFixed(3);
+                document.getElementById('current-h_water').textContent = waterLevel.toFixed(3);
+                document.getElementById('current-h_total').textContent = (oilLevel + waterLevel).toFixed(3);
+                document.getElementById('current-m_flow_oil').textContent = data.m_flow_oil?.toFixed(3) ?? '-';
+                document.getElementById('current-m_flow_water').textContent = data.m_flow_water?.toFixed(3) ?? '-';
+                document.getElementById('current-m_flow_gas').textContent = data.m_flow_gas?.toFixed(3) ?? '-';
+                updateSeparatorVisualization(oilLevel, waterLevel);
+            }
+        }
+        
+        function updateTankVisualization(level) {
+            const levelPercent = (level * 100);
+            const visualElement = document.getElementById('tank-level-visual');
+            if(visualElement) {
+                visualElement.style.height = `${levelPercent}%`;
+                visualElement.textContent = `${levelPercent.toFixed(1)}%`;
+            }
+        }
+        
+        function updateSeparatorVisualization(oilLevel, waterLevel) {
+            const waterPercent = (waterLevel * 100);
+            const oilPercent = (oilLevel * 100);
+            const waterEl = document.getElementById('separator-water-level');
+            const oilEl = document.getElementById('separator-oil-level');
+            if (waterEl) waterEl.style.height = `${waterPercent}%`;
+            if (oilEl) {
+                oilEl.style.height = `${oilPercent}%`;
+                oilEl.style.bottom = `${waterPercent}%`;
+            }
+        }
+        
+        function getSimulationParams() {
+            
+            const params = {
+                model_name: currentModel,
+                step_interval: 0.1,
+                stop_time: parseFloat(document.getElementById('stop_time').value),
+                time_speed: timeSpeed
+            };
+            document.querySelectorAll('#dynamic-params input[type="number"]').forEach(input => {
+                params[input.id] = parseFloat(input.value);
+            });
+            return params;
+        }
+        
+        function showStatus(message, type = 'info') {
+            
+            const statusElement = document.getElementById('status-message');
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+        
+        function updateUIState(running, paused = false) {
+            
+            simulationRunning = running;
+            simulationPaused = paused;
+            document.getElementById('start-simulation').disabled = running;
+            document.getElementById('stop-simulation').disabled = !running;
+            document.getElementById('pause-simulation').disabled = !running || paused;
+            document.getElementById('resume-simulation').disabled = !running || !paused;
+            document.getElementById('model-selector').disabled = running;
+            
+            const canUpdateTime = !running || paused;
+            document.getElementById('stop_time').disabled = !canUpdateTime;
+            document.getElementById('stop_time-slider').disabled = !canUpdateTime;
+            document.getElementById('increase-time-btn').disabled = !canUpdateTime;
+
+            
+            const updatableParams = {
+                TankControlSystem: ['setpointTemperature', 'Kp', 'Ki', 'Kd', 'heaterPowerMax', 'inletFlowRate', 'outletFlowRate', 'heatLossCoeff', 'inletTemperature', 'ambientTemperature'],
+                OilSeparator_ThreePhase: ['m_flow_in', 'oilLevelSetpoint', 'oil_Kp', 'oil_Ki', 'waterLevelSetpoint', 'water_Kp']
+            };
+
+            document.querySelectorAll('#dynamic-params .form-group').forEach(group => {
+                const input = group.querySelector('input[type="number"]');
+                if (!input) return;
+                const isUpdatable = updatableParams[currentModel]?.includes(input.id);
+                group.classList.toggle('locked', running && !isUpdatable);
+                group.querySelectorAll('input').forEach(inp => inp.disabled = (running && !isUpdatable));
+            });
+        }
+        
+        function switchModel(modelName) {
+            
+            if (simulationRunning) return;
+            currentModel = modelName;
+            
+            
+            document.querySelectorAll('.model-specific').forEach(el => {
+                const vizId = el.id.replace('viz-', '').replace('values-', '');
+                el.style.display = vizId === modelName ? 'block' : 'none';
+            });
+            
+            loadModelParams(modelName); 
+            initializeCharts(); 
+            updateCurrentValues({}); 
+            
+            
+            currentTime = 0;
+            stopTime = 3600;
+            const stopTimeInput = document.getElementById('stop_time');
+            const stopTimeSlider = document.getElementById('stop_time-slider');
+            const timeSlider = document.getElementById('time-slider');
+            stopTimeInput.value = stopTime;
+            if(stopTimeSlider) stopTimeSlider.value = stopTime;
+            if(timeSlider) { timeSlider.max = stopTime; timeSlider.value = 0; }
+            document.getElementById('time-display').textContent = `0 / ${stopTime} с`;
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            
+            document.getElementById('model-selector').addEventListener('change', (e) => switchModel(e.target.value));
+            
+            const stopTimeInput = document.getElementById('stop_time');
+            const stopTimeSlider = document.getElementById('stop_time-slider');
+            const increaseTimeBtn = document.getElementById('increase-time-btn');
+
+            function handleStopTimeUpdate(newTime) {
+                if (simulationRunning && newTime < currentTime) {
+                    showStatus(`Время окончания не может быть меньше текущего (${currentTime.toFixed(1)}с)`, 'error');
+                    stopTimeInput.value = stopTime; return;
+                }
+                stopTime = newTime;
+                stopTimeInput.value = stopTime; stopTimeSlider.value = stopTime;
+                document.getElementById('time-slider').max = stopTime;
+                document.getElementById('time-display').textContent = `${currentTime.toFixed(1)} / ${stopTime} с`;
+                socket.emit('update_stop_time', { stop_time: stopTime });
+            }
+
+            stopTimeInput.addEventListener('change', () => handleStopTimeUpdate(parseFloat(stopTimeInput.value)));
+            stopTimeSlider.addEventListener('input', () => handleStopTimeUpdate(parseFloat(stopTimeSlider.value)));
+            increaseTimeBtn.addEventListener('click', () => handleStopTimeUpdate(stopTime + 100));
+            
+            document.getElementById('time-slider').addEventListener('change', function() {
+                if (simulationRunning) socket.emit('seek_time', { time: parseFloat(this.value) });
+            });
+            
+            document.querySelectorAll('.speed-buttons button').forEach(button => {
+                button.addEventListener('click', function() {
+                    document.querySelector('.speed-buttons button.active').classList.remove('active');
+                    this.classList.add('active');
+                    timeSpeed = parseFloat(this.id.replace('speed-', ''));
+                    if (simulationRunning) socket.emit('set_time_speed', { speed: timeSpeed });
+                });
+            });
+            
+            document.getElementById('start-simulation').addEventListener('click', () => {
+                if(simulationRunning) return;
+                socket.emit('start_simulation', getSimulationParams());
+            });
+            document.getElementById('stop-simulation').addEventListener('click', () => socket.emit('stop_simulation'));
+            document.getElementById('pause-simulation').addEventListener('click', () => socket.emit('pause_simulation'));
+            document.getElementById('resume-simulation').addEventListener('click', () => socket.emit('resume_simulation'));
+            document.getElementById('export-csv').addEventListener('click', () => exportDataToCSV());
+            
+            
+            socket.on('connect', () => showStatus('Соединение с сервером установлено', 'success'));
+            socket.on('disconnect', () => { showStatus('Соединение с сервером потеряно', 'error'); updateUIState(false); });
+            
+            socket.on('simulation_started', function(data) {
+                showStatus(data.message, 'success');
+                dataStore = {}; 
+                initializeCharts();
+                updateUIState(true);
+                handleStopTimeUpdate(data.stop_time);
+                currentTime = data.current_time;
+                document.getElementById('time-slider').value = currentTime;
+            });
+            socket.on('simulation_data', (data) => { if(data && data.time !== undefined) updateCharts(data) });
+            socket.on('simulation_error', (data) => { showStatus(`Ошибка: ${data.error}`, 'error'); updateUIState(false); });
+            socket.on('simulation_ended', (data) => { showStatus(data.message, 'info'); updateUIState(false); });
+            socket.on('simulation_paused', (data) => { showStatus(data.message, 'info'); updateUIState(true, true); });
+            socket.on('simulation_resumed', (data) => { showStatus(data.message, 'info'); updateUIState(true, false); });
+            socket.on('time_seeked', (data) => showStatus(`Перемотка на ${data.time.toFixed(1)}с`, 'info'));
+            socket.on('stop_time_updated', (data) => showStatus(`Время симуляции обновлено: ${data.stop_time}с`, 'info'));
+            
+            
+            switchModel(currentModel);
+        });
+
+        function exportDataToCSV() {
+            
+            if (!dataStore.time || dataStore.time.length === 0) {
+                showStatus('Нет данных для экспорта.', 'error'); return;
+            }
+            const headers = Object.keys(dataStore);
+            let csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + '\n';
+            for (let i = 0; i < dataStore.time.length; i++) {
+                let row = headers.map(header => dataStore[header][i] ?? '').join(',');
+                csvContent += row + '\n';
+            }
+            const link = document.createElement("a");
+            link.setAttribute("href", encodeURI(csvContent));
+            link.setAttribute("download", `${currentModel}_simulation_data.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showStatus('Данные успешно экспортированы.', 'success');
+        }
+
+        function buildDynamicParams(paramList) {
+            
+            const container = document.getElementById('dynamic-params');
+            container.innerHTML = '';
+            if (!paramList) return;
+            
+            paramList.forEach(p => {
+                const group = document.createElement('div');
+                group.className = 'form-group';
+                
+                const label = document.createElement('label');
+                label.setAttribute('for', p.name);
+                label.textContent = p.comment || p.name;
+                
+                const numberInput = document.createElement('input');
+                numberInput.type = 'number';
+                numberInput.id = p.name;
+                numberInput.value = p.default ?? 0;
+                numberInput.step = 'any';
+                
+                const slider = document.createElement('input');
+                slider.type = 'range';
+                slider.className = 'parameter-slider';
+                slider.id = `${p.name}-slider`;
+                
+                const rangeMatch = /(\d.-]+)\s*\.\.\s*([\d.-]+)/.exec(p.comment || '');
+                let min = 0, max = 1;
+                if (rangeMatch) {
+                    min = parseFloat(rangeMatch[1]);
+                    max = parseFloat(rangeMatch[2]);
+                } else if (typeof p.default === 'number' && p.default !== 0) {
+                    min = p.default > 0 ? p.default * 0.1 : p.default * 10;
+                    max = p.default > 0 ? p.default * 10 : p.default * 0.1;
+                } else {
+                    max = (p.default ?? 0) + 100;
+                }
+                slider.min = min;
+                slider.max = max;
+                slider.step = (max - min) / 200;
+                slider.value = numberInput.value;
+
+                group.append(label, numberInput, slider);
+                container.appendChild(group);
+            });
+            
+            
+            document.querySelectorAll('#dynamic-params input[type="number"]').forEach(input => {
+                const slider = document.getElementById(`${input.id}-slider`);
+                if (!slider) return;
+                
+                let timeout;
+                const sendUpdate = () => {
+                    if (!simulationRunning || !document.getElementById(input.id).closest('.form-group').classList.contains('locked')) {
+                        const paramUpdate = { [input.id]: parseFloat(input.value) };
+                        clearTimeout(timeout);
+                        timeout = setTimeout(() => socket.emit('update_parameters', paramUpdate), 250);
+                    }
+                };
+                input.addEventListener('input', () => { slider.value = input.value; sendUpdate(); });
+                slider.addEventListener('input', () => { input.value = slider.value; sendUpdate(); });
             });
         }
 
-        async function runSimulation() {
-            destroyCharts();
-            const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = '<div style="color: #6c757d; padding: 15px; background: #f8f9fa; border-radius: 6px;">Идет расчет... Пожалуйста, подождите ⏳</div>';
-
-            const config = {
-                tankVolume: parseFloat(document.getElementById('tankVolume').value),
-                initialTemperature: parseFloat(document.getElementById('initialTemperature').value),
-                setpointTemperature: parseFloat(document.getElementById('setpointTemperature').value),
-                density: parseFloat(document.getElementById('density').value),
-                heatCapacity: parseFloat(document.getElementById('heatCapacity').value),
-                heatLossCoeff: parseFloat(document.getElementById('heatLossCoeff').value),
-                Kp: parseFloat(document.getElementById('Kp').value),
-                Ki: parseFloat(document.getElementById('Ki').value),
-                Kd: parseFloat(document.getElementById('Kd').value),
-                heaterPowerMax: parseFloat(document.getElementById('heaterPowerMax').value),
-                stop_time: parseFloat(document.getElementById('stop_time').value)
-            };
-
-            try {
-                const response = await fetch('/simulate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(config)
-                });
-                
-                const data = await response.json();
-                
-                if(data.error) {
-                    resultDiv.innerHTML = `<div style="color: #dc3545; padding: 15px; background: #f8d7da; border-radius: 6px;">Ошибка: ${data.error}</div>`;
-                    return;
-                }
-
-                const times = data.time_series.map(d => d.time);
-                const setpoint = Array(times.length).fill(config.setpointTemperature);
-
-                // График температуры
-                charts.temperature = new Chart(document.getElementById('temperatureChart'), {
-                    type: 'line',
-                    data: {
-                        labels: times,
-                        datasets: [{
-                            label: 'Текущая температура',
-                            data: data.time_series.map(d => d.temperature),
-                            borderColor: '#ff6384',
-                            backgroundColor: 'rgba(255, 99, 132, 0.1)',
-                            tension: 0.2,
-                            borderWidth: 2
-                        },
-                        {
-                            label: 'Целевая температура',
-                            data: setpoint,
-                            borderColor: '#6c757d',
-                            borderDash: [5, 5],
-                            borderWidth: 1,
-                            pointRadius: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            x: { 
-                                title: { 
-                                    display: true, 
-                                    text: 'Время, сек',
-                                    color: '#6c757d'
-                                }
-                            },
-                            y: { 
-                                title: { 
-                                    display: true, 
-                                    text: 'Температура, °C',
-                                    color: '#6c757d'
-                                }
-                            }
-                        },
-                        plugins: {
-                            legend: {
-                                position: 'top',
-                                labels: { color: '#2c3e50' }
-                            }
-                        }
+        function loadModelParams(modelName){
+            
+            fetch(`/get_model_info?model_name=${modelName}`)
+                .then(r => r.json())
+                .then(json => {
+                    if (json.parameters) {
+                        buildDynamicParams(json.parameters);
+                        updateUIState(simulationRunning, simulationPaused); 
                     }
+                }).catch(err => {
+                    showStatus(`Ошибка загрузки параметров для ${modelName}`, 'error');
                 });
-
-                // График мощности
-                charts.power = new Chart(document.getElementById('powerChart'), {
-                    type: 'line',
-                    data: {
-                        labels: times,
-                        datasets: [{
-                            label: 'Мощность нагревателя',
-                            data: data.time_series.map(d => d.heaterPower),
-                            borderColor: '#36a2eb',
-                            backgroundColor: 'rgba(54, 162, 235, 0.1)',
-                            tension: 0.2,
-                            borderWidth: 2
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            x: { 
-                                title: { 
-                                    display: true, 
-                                    text: 'Время, сек',
-                                    color: '#6c757d'
-                                }
-                            },
-                            y: { 
-                                title: { 
-                                    display: true, 
-                                    text: 'Мощность, Вт',
-                                    color: '#6c757d'
-                                },
-                                suggestedMax: config.heaterPowerMax * 1.1
-                            }
-                        },
-                        plugins: {
-                            annotation: {
-                                annotations: {
-                                    maxPowerLine: {
-                                        type: 'line',
-                                        yMin: config.heaterPowerMax,
-                                        yMax: config.heaterPowerMax,
-                                        borderColor: '#dc3545',
-                                        borderWidth: 1,
-                                        borderDash: [5, 5],
-                                        label: {
-                                            content: 'Максимальная мощность',
-                                            position: 'end',
-                                            backgroundColor: 'rgba(220, 53, 69, 0.1)'
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-
-                // График ПИД-составляющих
-                charts.pid = new Chart(document.getElementById('pidChart'), {
-                    type: 'line',
-                    data: {
-                        labels: times,
-                        datasets: [
-                            {
-                                label: 'Ошибка',
-                                data: data.time_series.map(d => d.error),
-                                borderColor: '#ff9f40',
-                                backgroundColor: 'rgba(255, 159, 64, 0.1)',
-                                tension: 0.2,
-                                borderWidth: 2
-                            },
-                            {
-                                label: 'Интегральная',
-                                data: data.time_series.map(d => d.integralError),
-                                borderColor: '#4bc0c0',
-                                backgroundColor: 'rgba(75, 192, 192, 0.1)',
-                                tension: 0.2,
-                                borderWidth: 2
-                            },
-                            {
-                                label: 'Дифференциальная',
-                                data: data.time_series.map(d => d.derivativeError),
-                                borderColor: '#9966ff',
-                                backgroundColor: 'rgba(153, 102, 255, 0.1)',
-                                tension: 0.2,
-                                borderWidth: 2
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            x: { 
-                                title: { 
-                                    display: true, 
-                                    text: 'Время, сек',
-                                    color: '#6c757d'
-                                }
-                            },
-                            y: { 
-                                title: { 
-                                    display: true, 
-                                    text: 'Значение',
-                                    color: '#6c757d'
-                                }
-                            }
-                        },
-                        plugins: {
-                            legend: {
-                                position: 'top',
-                                labels: { color: '#2c3e50' }
-                            }
-                        }
-                    }
-                });
-
-                const finalTemp = data.time_series[data.time_series.length-1].temperature.toFixed(2);
-                const maxPower = Math.max(...data.time_series.map(d => d.heaterPower)).toFixed(2);
-                
-                resultDiv.innerHTML = `
-                    <h3 style="color: #2c3e50; margin-top: 0;">Результаты симуляции</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 6px;">
-                            <div style="color: #6c757d; font-size: 0.9em;">Время симуляции</div>
-                            <div style="font-size: 1.4em; color: #2c3e50;">${data.sim_time} сек</div>
-                        </div>
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 6px;">
-                            <div style="color: #6c757d; font-size: 0.9em;">Финальная температура</div>
-                            <div style="font-size: 1.4em; color: ${finalTemp >= config.setpointTemperature*0.95 ? '#28a745' : '#dc3545'};">${finalTemp} °C</div>
-                        </div>
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 6px;">
-                            <div style="color: #6c757d; font-size: 0.9em;">Макс. мощность</div>
-                            <div style="font-size: 1.4em; color: ${maxPower >= config.heaterPowerMax*0.95 ? '#dc3545' : '#4a90e2'};">${maxPower} Вт</div>
-                        </div>
-                    </div>
-                    <h4 style="color: #2c3e50; margin-bottom: 12px;">Использованные параметры:</h4>
-                    <pre>${JSON.stringify(data.config, null, 2)}</pre>
-                `;
-
-            } catch(e) {
-                resultDiv.innerHTML = `<div style="color: #dc3545; padding: 15px; background: #f8d7da; border-radius: 6px;">Ошибка соединения: ${e.message}</div>`;
-            }
         }
     </script>
 </body>

@@ -1,0 +1,271 @@
+<?xml version = "1.0" encoding="UTF-8"?>
+
+<!-- description of the model interface using an extention of the FMI standard -->
+<fmiModelDescription
+  fmiVersion                          = "1.0"
+
+  modelName                           = "TankLevelControl"
+  modelIdentifier                     = "TankLevelControl"
+
+  OPENMODELICAHOME                    = "C:/Program Files/OpenModelica1.24.4-64bit"
+
+  guid                                = "{1122df71-cfbc-4a1a-8181-91a5c6e65ca8}"
+
+  description                         = ""
+  generationTool                      = "OpenModelica Compiler OpenModelica v1.24.4 (64-bit)"
+  generationDateAndTime               = "2025-04-24T00:32:01Z"
+
+  variableNamingConvention            = "structured"
+
+  numberOfEventIndicators             = "0"  cmt_numberOfEventIndicators             = "NG:       number of zero crossings,                           FMI"
+  numberOfTimeEvents                  = "0"  cmt_numberOfTimeEvents                  = "NG_SAM:   number of zero crossings that are samples,          OMC"
+
+  numberOfInputVariables              = "0"  cmt_numberOfInputVariables              = "NI:       number of inputvar on topmodel,                     OMC"
+  numberOfOutputVariables             = "0"  cmt_numberOfOutputVariables             = "NO:       number of outputvar on topmodel,                    OMC"
+
+  numberOfExternalObjects             = "0"  cmt_numberOfExternalObjects             = "NEXT:     number of external objects,                         OMC"
+  numberOfFunctions                   = "0"  cmt_numberOfFunctions                   = "NFUNC:    number of functions used by the simulation,         OMC"
+
+  numberOfContinuousStates            = "2"  cmt_numberOfContinuousStates            = "NX:       number of states,                                   FMI"
+  numberOfRealAlgebraicVariables      = "4"  cmt_numberOfRealAlgebraicVariables      = "NY:       number of real variables,                           OMC"
+  numberOfRealAlgebraicAliasVariables = "0"  cmt_numberOfRealAlgebraicAliasVariables = "NA:       number of alias variables,                          OMC"
+  numberOfRealParameters              = "9"  cmt_numberOfRealParameters              = "NP:       number of parameters,                               OMC"
+
+  numberOfIntegerAlgebraicVariables   = "0"  cmt_numberOfIntegerAlgebraicVariables   = "NYINT:    number of alg. int variables,                       OMC"
+  numberOfIntegerAliasVariables       = "0"  cmt_numberOfIntegerAliasVariables       = "NAINT:    number of alias int variables,                      OMC"
+  numberOfIntegerParameters           = "0"  cmt_numberOfIntegerParameters           = "NPINT:    number of int parameters,                           OMC"
+
+  numberOfStringAlgebraicVariables    = "0"  cmt_numberOfStringAlgebraicVariables    = "NYSTR:    number of alg. string variables,                    OMC"
+  numberOfStringAliasVariables        = "0"  cmt_numberOfStringAliasVariables        = "NASTR:    number of alias string variables,                   OMC"
+  numberOfStringParameters            = "0"  cmt_numberOfStringParameters            = "NPSTR:    number of string parameters,                        OMC"
+
+  numberOfBooleanAlgebraicVariables   = "0"  cmt_numberOfBooleanAlgebraicVariables   = "NYBOOL:   number of alg. bool variables,                      OMC"
+  numberOfBooleanAliasVariables       = "0"  cmt_numberOfBooleanAliasVariables       = "NABOOL:   number of alias bool variables,                     OMC"
+  numberOfBooleanParameters           = "0"  cmt_numberOfBooleanParameters           = "NPBOOL:   number of bool parameters,                          OMC" >
+
+
+  <!-- startTime, stopTime, tolerance are FMI specific, all others are OMC specific -->
+  <DefaultExperiment
+    startTime      = "0"
+    stopTime       = "3600"
+    stepSize       = "7.2"
+    tolerance      = "1e-06"
+    solver        = "dassl"
+    outputFormat      = "csv"
+    variableFilter      = ".*" />
+
+  <!-- variables in the model -->
+  <ModelVariables>
+
+  <ScalarVariable
+    name = "error"
+    valueReference = "1000"
+    description = "Ошибка регулирования"
+    variability = "continuous" isDiscrete = "false"
+    causality = "local" isValueChangeable = "false"
+    alias = "noAlias"
+    classIndex = "0" classType = "rSta"
+    isProtected = "false" hideResult = "" isEncrypted = "false" initNonlinear = "false"
+    fileName = "C:/ktk/models/TankLevelControl.mo" startLine = "14" startColumn = "3" endLine = "14" endColumn = "55" fileWritable = "true">
+    <Real fixed="false" useNominal="false" />
+  </ScalarVariable>
+  <ScalarVariable
+    name = "integralError"
+    valueReference = "1001"
+    description = "Интеграл ошибки"
+    variability = "continuous" isDiscrete = "false"
+    causality = "local" isValueChangeable = "false"
+    alias = "noAlias"
+    classIndex = "1" classType = "rSta"
+    isProtected = "false" hideResult = "" isEncrypted = "false" initNonlinear = "false"
+    fileName = "C:/ktk/models/TankLevelControl.mo" startLine = "15" startColumn = "3" endLine = "15" endColumn = "53" fileWritable = "true">
+    <Real fixed="false" useNominal="false" />
+  </ScalarVariable>
+  <ScalarVariable
+    name = "der(error)"
+    valueReference = "1002"
+    description = "der(Ошибка регулирования)"
+    variability = "continuous" isDiscrete = "false"
+    causality = "local" isValueChangeable = "false"
+    alias = "noAlias"
+    classIndex = "0" classType = "rDer"
+    isProtected = "false" hideResult = "" isEncrypted = "false" initNonlinear = "false"
+    fileName = "C:/ktk/models/TankLevelControl.mo" startLine = "14" startColumn = "3" endLine = "14" endColumn = "55" fileWritable = "true">
+    <Real fixed="false" useNominal="false" />
+  </ScalarVariable>
+  <ScalarVariable
+    name = "der(integralError)"
+    valueReference = "1003"
+    description = "der(Интеграл ошибки)"
+    variability = "continuous" isDiscrete = "false"
+    causality = "local" isValueChangeable = "false"
+    alias = "noAlias"
+    classIndex = "1" classType = "rDer"
+    isProtected = "false" hideResult = "" isEncrypted = "false" initNonlinear = "false"
+    fileName = "C:/ktk/models/TankLevelControl.mo" startLine = "15" startColumn = "3" endLine = "15" endColumn = "53" fileWritable = "true">
+    <Real fixed="false" useNominal="false" />
+  </ScalarVariable>
+  <ScalarVariable
+    name = "der(temperature)"
+    valueReference = "1004"
+    description = "Текущая температура жидкости (℃)"
+    variability = "continuous" isDiscrete = "false"
+    causality = "local" isValueChangeable = "false"
+    alias = "noAlias"
+    classIndex = "0" classType = "rAlg"
+    isProtected = "false" hideResult = "" isEncrypted = "false" initNonlinear = "false"
+    fileName = "C:/ktk/models/TankLevelControl.mo" startLine = "12" startColumn = "3" endLine = "12" endColumn = "82" fileWritable = "true">
+    <Real fixed="false" useNominal="false" />
+  </ScalarVariable>
+  <ScalarVariable
+    name = "derivativeError"
+    valueReference = "1005"
+    description = "Производная ошибки"
+    variability = "continuous" isDiscrete = "false"
+    causality = "local" isValueChangeable = "false"
+    alias = "noAlias"
+    classIndex = "1" classType = "rAlg"
+    isProtected = "false" hideResult = "" isEncrypted = "false" initNonlinear = "false"
+    fileName = "C:/ktk/models/TankLevelControl.mo" startLine = "16" startColumn = "3" endLine = "16" endColumn = "61" fileWritable = "true">
+    <Real fixed="false" useNominal="false" />
+  </ScalarVariable>
+  <ScalarVariable
+    name = "heaterPower"
+    valueReference = "1006"
+    description = "Мощность нагревателя (Вт)"
+    variability = "continuous" isDiscrete = "false"
+    causality = "local" isValueChangeable = "false"
+    alias = "noAlias"
+    classIndex = "2" classType = "rAlg"
+    isProtected = "false" hideResult = "" isEncrypted = "false" initNonlinear = "false"
+    fileName = "C:/ktk/models/TankLevelControl.mo" startLine = "13" startColumn = "3" endLine = "13" endColumn = "68" fileWritable = "true">
+    <Real fixed="false" useNominal="false" />
+  </ScalarVariable>
+  <ScalarVariable
+    name = "temperature"
+    valueReference = "1007"
+    description = "Текущая температура жидкости (℃)"
+    variability = "continuous" isDiscrete = "false"
+    causality = "local" isValueChangeable = "false"
+    alias = "noAlias"
+    classIndex = "3" classType = "rAlg"
+    isProtected = "false" hideResult = "" isEncrypted = "false" initNonlinear = "false"
+    fileName = "C:/ktk/models/TankLevelControl.mo" startLine = "12" startColumn = "3" endLine = "12" endColumn = "82" fileWritable = "true">
+    <Real fixed="false" useNominal="false" />
+  </ScalarVariable>
+  <ScalarVariable
+    name = "Kd"
+    valueReference = "1008"
+    description = "Дифференциальный коэффициент ПИД-регулятора"
+    variability = "parameter" isDiscrete = "true"
+    causality = "parameter" isValueChangeable = "true"
+    alias = "noAlias"
+    classIndex = "0" classType = "rPar"
+    isProtected = "false" hideResult = "" isEncrypted = "false" initNonlinear = "false"
+    fileName = "C:/ktk/models/TankLevelControl.mo" startLine = "10" startColumn = "3" endLine = "10" endColumn = "110" fileWritable = "true">
+    <Real start="200.0" fixed="true" useNominal="false" />
+  </ScalarVariable>
+  <ScalarVariable
+    name = "Ki"
+    valueReference = "1009"
+    description = "Интегральный коэффициент ПИД-регулятора"
+    variability = "parameter" isDiscrete = "true"
+    causality = "parameter" isValueChangeable = "true"
+    alias = "noAlias"
+    classIndex = "1" classType = "rPar"
+    isProtected = "false" hideResult = "" isEncrypted = "false" initNonlinear = "false"
+    fileName = "C:/ktk/models/TankLevelControl.mo" startLine = "9" startColumn = "3" endLine = "9" endColumn = "103" fileWritable = "true">
+    <Real start="8.0" fixed="true" useNominal="false" />
+  </ScalarVariable>
+  <ScalarVariable
+    name = "Kp"
+    valueReference = "1010"
+    description = "Коэффициент пропорциональности ПИД-регулятора"
+    variability = "parameter" isDiscrete = "true"
+    causality = "parameter" isValueChangeable = "true"
+    alias = "noAlias"
+    classIndex = "2" classType = "rPar"
+    isProtected = "false" hideResult = "" isEncrypted = "false" initNonlinear = "false"
+    fileName = "C:/ktk/models/TankLevelControl.mo" startLine = "8" startColumn = "3" endLine = "8" endColumn = "116" fileWritable = "true">
+    <Real start="1500.0" fixed="true" useNominal="false" />
+  </ScalarVariable>
+  <ScalarVariable
+    name = "density"
+    valueReference = "1011"
+    description = "Плотность жидкости (кг/м^3)"
+    variability = "parameter" isDiscrete = "true"
+    causality = "parameter" isValueChangeable = "true"
+    alias = "noAlias"
+    classIndex = "3" classType = "rPar"
+    isProtected = "false" hideResult = "" isEncrypted = "false" initNonlinear = "false"
+    fileName = "C:/ktk/models/TankLevelControl.mo" startLine = "5" startColumn = "3" endLine = "5" endColumn = "82" fileWritable = "true">
+    <Real start="1000.0" fixed="true" useNominal="false" />
+  </ScalarVariable>
+  <ScalarVariable
+    name = "heatCapacity"
+    valueReference = "1012"
+    description = "Теплоемкость жидкости (Дж/кг·℃)"
+    variability = "parameter" isDiscrete = "true"
+    causality = "parameter" isValueChangeable = "true"
+    alias = "noAlias"
+    classIndex = "4" classType = "rPar"
+    isProtected = "false" hideResult = "" isEncrypted = "false" initNonlinear = "false"
+    fileName = "C:/ktk/models/TankLevelControl.mo" startLine = "4" startColumn = "3" endLine = "4" endColumn = "98" fileWritable = "true">
+    <Real start="4180.0" fixed="true" useNominal="false" />
+  </ScalarVariable>
+  <ScalarVariable
+    name = "heaterPowerMax"
+    valueReference = "1013"
+    description = "Максимальная мощность нагревателя (Вт)"
+    variability = "parameter" isDiscrete = "true"
+    causality = "parameter" isValueChangeable = "true"
+    alias = "noAlias"
+    classIndex = "5" classType = "rPar"
+    isProtected = "false" hideResult = "" isEncrypted = "false" initNonlinear = "false"
+    fileName = "C:/ktk/models/TankLevelControl.mo" startLine = "6" startColumn = "3" endLine = "6" endColumn = "113" fileWritable = "true">
+    <Real start="2e4" fixed="true" useNominal="false" />
+  </ScalarVariable>
+  <ScalarVariable
+    name = "initialTemperature"
+    valueReference = "1014"
+    description = "Начальная температура жидкости (℃)"
+    variability = "parameter" isDiscrete = "true"
+    causality = "parameter" isValueChangeable = "true"
+    alias = "noAlias"
+    classIndex = "6" classType = "rPar"
+    isProtected = "false" hideResult = "" isEncrypted = "false" initNonlinear = "false"
+    fileName = "C:/ktk/models/TankLevelControl.mo" startLine = "3" startColumn = "3" endLine = "3" endColumn = "108" fileWritable = "true">
+    <Real start="20.0" fixed="true" useNominal="false" />
+  </ScalarVariable>
+  <ScalarVariable
+    name = "setpointTemperature"
+    valueReference = "1015"
+    description = "Заданная температура (℃)"
+    variability = "parameter" isDiscrete = "true"
+    causality = "parameter" isValueChangeable = "true"
+    alias = "noAlias"
+    classIndex = "7" classType = "rPar"
+    isProtected = "false" hideResult = "" isEncrypted = "false" initNonlinear = "false"
+    fileName = "C:/ktk/models/TankLevelControl.mo" startLine = "7" startColumn = "3" endLine = "7" endColumn = "90" fileWritable = "true">
+    <Real start="80.0" fixed="true" useNominal="false" />
+  </ScalarVariable>
+  <ScalarVariable
+    name = "tankVolume"
+    valueReference = "1016"
+    description = "Объем резервуара (м^3)"
+    variability = "parameter" isDiscrete = "true"
+    causality = "parameter" isValueChangeable = "true"
+    alias = "noAlias"
+    classIndex = "8" classType = "rPar"
+    isProtected = "false" hideResult = "" isEncrypted = "false" initNonlinear = "false"
+    fileName = "C:/ktk/models/TankLevelControl.mo" startLine = "2" startColumn = "3" endLine = "2" endColumn = "75" fileWritable = "true">
+    <Real start="0.1" fixed="true" useNominal="false" />
+  </ScalarVariable>
+
+
+
+  </ModelVariables>
+
+
+</fmiModelDescription>
+
